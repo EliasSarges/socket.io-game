@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>game</title>
+
+    <link rel="stylesheet" href="styles.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+
+  <body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+
+    <script type="module">
+      const socket = io();
+      const canvas = document.getElementById("canvas");
+      const context = canvas.getContext("2d");
+
+      const controller = {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+      };
+
+      const handleKey = (event) => {
+        const keyStatus = event.type === "keydown";
+
+        switch (event.key) {
+          case "a":
+            controller.left = keyStatus;
+            break;
+          case "d":
+            controller.right = keyStatus;
+            break;
+          case "w":
+            controller.up = keyStatus;
+            break;
+          case "s":
+            controller.down = keyStatus;
+            break;
+        }
+      };
+
+      const render = (state) => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (const player of state.players) {
+          context.fillStyle = "#e1ff00";
+          context.fillRect(player.pos.x, player.pos.y, 20, 20);
+        }
+      };
+
+      socket.on("update-client", render);
+
+      const updateServer = () => {
+        socket.emit("update-server", { controller, id: socket.id });
+      };
+
+      setInterval(updateServer, 1000 / 60);
+
+      document.addEventListener("keydown", handleKey);
+      document.addEventListener("keyup", handleKey);
+    </script>
+  </body>
+</html>
