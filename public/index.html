@@ -14,55 +14,55 @@
     <canvas id="canvas" width="500" height="500"></canvas>
 
     <script type="module">
+      import { createGame } from "./js/createGame.js";
+      import { handleKey } from "./js/controller.js";
+      import { render } from "./js/render.js";
+
       const socket = io();
       const canvas = document.getElementById("canvas");
-      const context = canvas.getContext("2d");
+      // const spriteSheet = new Image();
+      // const loadSprite = (path) => (spriteSheet.src = path);
 
-      const controller = {
-        left: false,
-        right: false,
-        up: false,
-        down: false,
-      };
+      const game = createGame();
 
-      const handleKey = (event) => {
-        const keyStatus = event.type === "keydown";
+      let start = Date.now();
+      let frameIndex = 0;
 
-        switch (event.key) {
-          case "a":
-            controller.left = keyStatus;
-            break;
-          case "d":
-            controller.right = keyStatus;
-            break;
-          case "w":
-            controller.up = keyStatus;
-            break;
-          case "s":
-            controller.down = keyStatus;
-            break;
-        }
-      };
+      socket.on("connect", () => {
+        socket.emit("create-player", "eu");
+      });
 
-      const render = (state) => {
-        context.clearRect(0, 0, canvas.width, canvas.height);
+      socket.on("join", (state) => {
+        game.setState(state);
 
-        for (const player of state.players) {
-          context.fillStyle = "#e1ff00";
-          context.fillRect(player.pos.x, player.pos.y, 20, 20);
-        }
-      };
+        const currentPlayer = game.state.players.find(
+          (player) => player.id === socket.id
+        );
 
-      socket.on("update-client", render);
+        const context = canvas.getContext("2d");
+        const argsRender = {
+          socket,
+          context,
+          currentPlayer,
+          game,
+          frameIndex,
+          start,
+        };
 
-      const updateServer = () => {
-        socket.emit("update-server", { controller, id: socket.id });
-      };
+        render(argsRender);
 
-      setInterval(updateServer, 1000 / 60);
+        document.addEventListener("keydown", (event) =>
+          handleKey(event, currentPlayer)
+        );
 
-      document.addEventListener("keydown", handleKey);
-      document.addEventListener("keyup", handleKey);
+        document.addEventListener("keyup", (event) =>
+          handleKey(event, currentPlayer)
+        );
+      });
+
+      socket.on("add-player", (data) => game.addPlayer(data.player));
+      socket.on("remove-player", (data) => game.removePlayer(data.id));
+      socket.on("update-position", (data) => game.movePlayer(data));
     </script>
   </body>
 </html>

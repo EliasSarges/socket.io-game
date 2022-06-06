@@ -1,54 +1,34 @@
 import { Server } from "socket.io";
 import express from "express";
 import http from "http";
+import { createGame } from "./public/js/createGame.js";
+import { createPlayer } from "./public/js/createPlayer.js";
 
 const app = express();
 const server = http.createServer(app);
 const socketio = new Server(server);
-
-const state = {
-  players: [],
-  screen: {
-    width: 500,
-    height: 500,
-  },
-};
-
 app.use(express.static("public"));
 
-const addPlayer = (id) => {
-  const player = {
-    id,
-    velocity: 10,
-    pos: {
-      x: Math.floor(Math.random() * state.screen.width),
-      y: Math.floor(Math.random() * state.screen.height),
-    },
-  };
+const game = createGame();
 
-  state.players.push(player);
-};
-
-const removePlayer = (id) => {
-  state.players = state.players.filter((player) => player.id !== id);
-};
+game.subscribe((data) => {
+  socketio.emit(data.type, data);
+});
 
 socketio.on("connection", (socket) => {
-  addPlayer(socket.id);
+  socket.on("create-player", (name) => {
+    const player = createPlayer(socket.id, name, game.state.screen);
+    game.addPlayer(player);
 
-  socket.on("update-server", (data) => {
-    // console.clear();
-    // console.log(data);
+    socket.emit("join", game.state);
   });
 
+  socket.on("move-player", (data) => game.movePlayer(data));
+
   socket.on("disconnect", () => {
-    removePlayer(socket.id);
+    game.removePlayer(socket.id);
   });
 });
 
-const updateClient = () => {
-  socketio.emit("update-client", state);
-};
-
-setInterval(updateClient, 1000 / 60);
-server.listen(3000, () => console.log("Server running on port 3000"));
+const port = 3000;
+server.listen(port, () => console.log(`Server running on port ${port}`));
