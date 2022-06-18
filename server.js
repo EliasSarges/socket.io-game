@@ -5,10 +5,10 @@ import { createGame } from "./public/js/createGame.js";
 import { createPlayer } from "./public/js/createPlayer.js";
 
 const app = express();
-const server = http.createServer(app);
-const socketio = new Server(server);
 app.use(express.static("public"));
 
+const server = http.createServer(app);
+const socketio = new Server(server);
 const game = createGame();
 
 game.subscribe((data) => {
@@ -16,14 +16,19 @@ game.subscribe((data) => {
 });
 
 socketio.on("connection", (socket) => {
-  socket.on("create-player", (name) => {
-    const player = createPlayer(socket.id, name, game.state.screen);
-    game.addPlayer(player);
+  socket.on("create-player", (data) => {
+    const player = createPlayer(
+      socket.id,
+      data.name,
+      data.charId,
+      game.state.screen
+    );
 
+    game.addPlayer(player);
     socket.emit("join", game.state);
   });
 
-  socket.on("move-player", (data) => game.movePlayer(data));
+  socket.on("move-player", (data) => game.updatePosition(data));
 
   socket.on("disconnect", () => {
     game.removePlayer(socket.id);

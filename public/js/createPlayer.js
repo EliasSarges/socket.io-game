@@ -1,11 +1,20 @@
-export const createPlayer = (id, name, screen) => {
+import { availablePlayers } from "./constants.js";
+
+const createPosition = (screenDimension, playerDimension) => {
+  return Math.floor(Math.random() * (screenDimension - playerDimension * 2));
+};
+
+export const createPlayer = (id, name, charId, screen) => {
+  const currentPlayer = availablePlayers[charId];
+
   const player = {
     id,
+    charId,
     name,
-    velocity: 8,
+    velocity: 4,
     pos: {
-      x: Math.floor(Math.random() * screen.width),
-      y: Math.floor(Math.random() * screen.height),
+      x: createPosition(screen.width, currentPlayer.width),
+      y: createPosition(screen.height, currentPlayer.height),
     },
     controller: {
       left: false,
@@ -13,13 +22,9 @@ export const createPlayer = (id, name, screen) => {
       up: false,
       down: false,
     },
-    size: {
-      width: 0,
-      height: 0,
-    },
-    frameIndex: 0,
-    animations: {},
   };
 
+  console.clear();
+  console.log(player);
   return player;
 };

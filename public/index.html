@@ -19,17 +19,15 @@
       import { render } from "./js/render.js";
 
       const socket = io();
-      const canvas = document.getElementById("canvas");
-      // const spriteSheet = new Image();
-      // const loadSprite = (path) => (spriteSheet.src = path);
-
       const game = createGame();
 
-      let start = Date.now();
-      let frameIndex = 0;
-
       socket.on("connect", () => {
-        socket.emit("create-player", "eu");
+        const urlParams = new URLSearchParams(window.location.search);
+        const charId = urlParams.get("charId");
+
+        socket.emit("create-player", {
+          charId,
+        });
       });
 
       socket.on("join", (state) => {
@@ -39,17 +37,7 @@
           (player) => player.id === socket.id
         );
 
-        const context = canvas.getContext("2d");
-        const argsRender = {
-          socket,
-          context,
-          currentPlayer,
-          game,
-          frameIndex,
-          start,
-        };
-
-        render(argsRender);
+        render(socket, currentPlayer, game);
 
         document.addEventListener("keydown", (event) =>
           handleKey(event, currentPlayer)
@@ -62,7 +50,7 @@
 
       socket.on("add-player", (data) => game.addPlayer(data.player));
       socket.on("remove-player", (data) => game.removePlayer(data.id));
-      socket.on("update-position", (data) => game.movePlayer(data));
+      socket.on("update-position", (data) => game.updatePosition(data));
     </script>
   </body>
 </html>

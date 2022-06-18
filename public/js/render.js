@@ -1,74 +1,66 @@
-const getAnimation = (name) => {};
-const createAnimation = (name, startIndex, endIndex) => {};
+import { movePlayer } from "./controller.js";
+import { availablePlayers } from "./constants.js";
 
-export const render = (argsRender) => {
-  const { socket, context, currentPlayer, game, frameIndex, start } =
-    argsRender;
+const spriteSheet = new Image();
+spriteSheet.src = "./assets/sprites/player.png";
 
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d");
+
+let start = Date.now();
+let currentLoopIndex = 0;
+
+/**
+ * animationLoop
+ */
+export const animate = (player, currentAnimation) => {
+  const timer = Math.floor((Date.now() - start) / 60);
+  const selectedPlayer = availablePlayers[player.charId];
+
+  // render player area
+  // context.fillRect(
+  //   player.pos.x,
+  //   player.pos.y,
+  //   selectedPlayer.width * selectedPlayer.frameScale,
+  //   selectedPlayer.height * selectedPlayer.frameScale
+  // );
+
+  const animation = selectedPlayer.animations[currentAnimation];
+
+  // render player sprite
+  context.drawImage(
+    spriteSheet,
+    selectedPlayer.width * animation.frames[currentLoopIndex],
+    animation.framePositionY,
+    selectedPlayer.width,
+    selectedPlayer.height,
+    player.pos.x,
+    player.pos.y,
+    selectedPlayer.width * selectedPlayer.frameScale,
+    selectedPlayer.height * selectedPlayer.frameScale
+  );
+
+  // time between frames
+  if (timer > 1) {
+    start = Date.now();
+    currentLoopIndex++;
+  }
+
+  if (currentLoopIndex >= animation.frames.length) currentLoopIndex = 0;
+};
+
+/**
+ * render all players on game state and update their positions on canvas
+ */
+export const render = (socket, currentPlayer, game) => {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const player of game.state.players) {
-    const color = currentPlayer.id === player.id ? "#e1ff00" : "#606582";
-
-    context.fillStyle = color;
-    context.fillRect(player.pos.x, player.pos.y, 20, 20);
+    const currentAnimation = "idle";
+    animate(player, currentAnimation);
   }
 
-  if (currentPlayer) {
-    const { controller } = currentPlayer;
-
-    if (controller.left) {
-      currentPlayer.pos.x -= currentPlayer.velocity;
-    }
-    if (controller.right) {
-      currentPlayer.pos.x += currentPlayer.velocity;
-    }
-    if (controller.up) {
-      currentPlayer.pos.y -= currentPlayer.velocity;
-    }
-    if (controller.down) {
-      currentPlayer.pos.y += currentPlayer.velocity;
-    }
-
-    if (
-      controller.left ||
-      controller.right ||
-      controller.up ||
-      controller.down
-    ) {
-      const { id, pos } = currentPlayer;
-
-      socket.emit("move-player", {
-        id,
-        pos,
-      });
-    }
-  }
-
-  requestAnimationFrame(() => render(argsRender));
+  // update current player position
+  movePlayer(socket, currentPlayer);
+  requestAnimationFrame(() => render(socket, currentPlayer, game));
 };
-
-// export const animate = (pos) => {s
-//   const timer = Math.floor((Date.now() - start) / 60);
-
-//   if (timer > 1) {
-//     start = Date.now();
-//     frameIndex++;
-//   }
-
-//   context.drawImage(
-//     spriteSheet,
-//     frameIndex * 100,
-//     0,
-//     100,
-//     100,
-//     pos.x,
-//     pos.y,
-//     100,
-//     100
-//   );
-
-//   if (frameIndex > 3) {
-//     frameIndex = 0;
-//   }
-// };

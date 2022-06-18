@@ -17,3 +17,27 @@ export const handleKey = (event, currentPlayer) => {
       break;
   }
 };
+
+export const movePlayer = (socket, currentPlayer) => {
+  if (currentPlayer) {
+    const { controller } = currentPlayer;
+
+    if (controller.left) currentPlayer.pos.x -= currentPlayer.velocity;
+    if (controller.right) currentPlayer.pos.x += currentPlayer.velocity;
+    if (controller.up) currentPlayer.pos.y -= currentPlayer.velocity;
+    if (controller.down) currentPlayer.pos.y += currentPlayer.velocity;
+
+    if (
+      controller.left ||
+      controller.right ||
+      controller.up ||
+      controller.down
+    ) {
+      const { id, pos } = currentPlayer;
+      socket.emit("move-player", {
+        id,
+        pos,
+      });
+    }
+  }
+};

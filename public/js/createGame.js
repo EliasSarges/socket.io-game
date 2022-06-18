@@ -37,7 +37,7 @@ export const createGame = () => {
     });
   };
 
-  const movePlayer = (data) => {
+  const updatePosition = (data) => {
     const player = state.players.find((player) => player.id === data.id);
 
     if (player) {
@@ -63,6 +63,6 @@ export const createGame = () => {
     removePlayer,
     subscribe,
     notifyObservers,
-    movePlayer,
+    updatePosition,
   };
 };
